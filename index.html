@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>3. Basamak: Matematiksel Hesaplama - Düzeltilmiş</title>
+    <title>3. Basamak: Matematiksel Hesaplama - Relatif</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
@@ -27,8 +27,9 @@
         const startBtn = document.getElementById('startBtn');
 
         let neutralY = null; 
-        let offset = 20; // Başlangıç gürültüsünü dengelemek için offset
+        let offset = 20;
         const eyebrowPoints = [70, 63, 105, 66, 107, 300, 296, 334, 293, 336];
+        const nosePoint = 168; 
 
         const faceMesh = new FaceMesh({locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
@@ -44,13 +45,22 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
                 
+                // 1. Kaşın ortalama yüksekliği
                 let totalY = 0;
                 eyebrowPoints.forEach(i => totalY += landmarks[i].y);
-                let currentY = totalY / eyebrowPoints.length;
+                let currentEyebrowY = totalY / eyebrowPoints.length;
 
-                if (neutralY === null) neutralY = currentY;
+                // 2. Referans noktası (Burun köprüsü)
+                let currentNoseY = landmarks[nosePoint].y;
 
-                let movement = (neutralY - currentY) * 1000; 
+                // 3. RELATİF FARK (Kafa hareketini buradan eliyoruz)
+                let relativeDifference = currentNoseY - currentEyebrowY; 
+
+                // Nötr (başlangıç) pozisyonunu ayarla
+                if (neutralY === null) neutralY = relativeDifference;
+
+                // 4. Farkı kullanarak yüzde hesapla
+                let movement = (relativeDifference - neutralY) * 1000;
                 let rawPercentage = (movement * 5) - offset;
                 let percentage = Math.max(0, Math.min(100, rawPercentage));
 
