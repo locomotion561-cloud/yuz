@@ -2,47 +2,34 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>DEBUG MODU</title>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1. Basamak: Temiz Kamera</title>
     <style>
-        body { margin: 0; background: #333; color: white; text-align: center; font-family: sans-serif; }
-        #log { position: absolute; top: 0; width: 100%; background: rgba(0,0,0,0.8); padding: 10px; z-index: 999; }
-        #outputCanvas { width: 100vw; height: 100vh; transform: scaleX(-1); }
+        body { margin: 0; background: black; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #videoElement { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
+        #btn { position: absolute; padding: 20px 40px; font-size: 20px; z-index: 10; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="log">Hazırlanıyor...</div>
-    <video id="input_video" style="display:none;"></video>
-    <canvas id="outputCanvas"></canvas>
+
+    <button id="btn">Kamerayı Başlat</button>
+    <video id="videoElement" autoplay playsinline></video>
 
     <script>
-        const log = document.getElementById('log');
-        const videoElement = document.getElementById('input_video');
-        const canvasElement = document.getElementById('outputCanvas');
-        const canvasCtx = canvasElement.getContext('2d');
+        const video = document.getElementById('videoElement');
+        const btn = document.getElementById('btn');
 
-        log.innerText = "Yükleniyor...";
-
-        const faceMesh = new FaceMesh({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-        }});
-
-        faceMesh.onResults((results) => {
-            log.innerText = "Sistem aktif, kamera görüntüleniyor.";
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-        });
-
-        const camera = new Camera(videoElement, {
-            onFrame: async () => { await faceMesh.send({image: videoElement}); },
-            width: 640, height: 480
-        });
-
-        camera.start().then(() => {
-            log.innerText = "Kamera başlatıldı!";
-        }).catch(err => {
-            log.innerText = "HATA: Kamera başlatılamadı: " + err;
+        btn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                btn.style.display = 'none';
+            } catch (err) {
+                alert("Kamera hatası: " + err);
+            }
         });
     </script>
 </body>
