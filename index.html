@@ -1,53 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Fasyal Paraşütçü MVP</title>
+    <title>Fasyal Paraşütçü - Hata Ayıklama Modu</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: black; }
-        #outputCanvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; transform: scaleX(-1); }
-        #videoElement { display: none; }
+        body { margin: 0; background: #222; }
+        #outputCanvas { position: absolute; left: 0; top: 0; transform: scaleX(-1); } /* Ayna modu */
+        #debug { position: absolute; top: 10px; left: 10px; color: lime; font-family: monospace; background: rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
-    <video id="videoElement"></video>
+    <div id="debug">Sistem Başlıyor...</div>
+    <video id="videoElement" style="display:none;"></video>
     <canvas id="outputCanvas"></canvas>
 
     <script>
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('outputCanvas');
         const ctx = canvas.getContext('2d');
-        
-        let eyebrowY = 0; // Kaşın anlık konumu
+        const debug = document.getElementById('debug');
 
         const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
-
+        
         faceMesh.onResults((results) => {
+            // 1. Ekranı temizle ve videoyu çiz
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-            if (results.multiFaceLandmarks) {
-                for (const landmarks of results.multiFaceLandmarks) {
-                    // 70: Sol kaş üstü, 300: Sağ kaş üstü
-                    const leftEyebrow = landmarks[70];
-                    const rightEyebrow = landmarks[300];
-                    eyebrowY = (leftEyebrow.y + rightEyebrow.y) / 2;
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                debug.innerText = "YÜZ ALGILANDI: Kaş takibi aktif.";
+                const landmarks = results.multiFaceLandmarks[0];
+                
+                // Kaş koordinatları
+                const eyebrowY = (landmarks[70].y + landmarks[300].y) / 2;
 
-                    // Paraşütçüyü Çiz (Kaşların hizasında)
-                    ctx.fillStyle = "red";
-                    ctx.beginPath();
-                    // Y koordinatını ters çevirerek görselleştiriyoruz
-                    ctx.arc(canvas.width / 2, eyebrowY * canvas.height, 20, 0, 2 * Math.PI);
-                    ctx.fill();
-                }
+                // Paraşütçüyü çiz
+                ctx.fillStyle = "yellow";
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, eyebrowY * canvas.height, 20, 0, 2 * Math.PI);
+                ctx.fill();
+            } else {
+                debug.innerText = "HATA: Yüz bulunamadı! Lütfen yüzünü kameraya tam tut ve kırmızı maskeyi kaldır.";
             }
         });
 
         const camera = new Camera(video, {
             onFrame: async () => { await faceMesh.send({image: video}); },
-            width: 1280, height: 720
+            width: 640, height: 480 // Boyutu optimize ettik
         });
         camera.start();
     </script>
