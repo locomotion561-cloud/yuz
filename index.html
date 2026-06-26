@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>3. Basamak: Matematiksel Hesaplama</title>
+    <title>3. Basamak: Matematiksel Hesaplama - Düzeltilmiş</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
@@ -26,7 +26,8 @@
         const video = document.getElementById('video');
         const startBtn = document.getElementById('startBtn');
 
-        let neutralY = null; // Başlangıçtaki kaş yüksekliği
+        let neutralY = null; 
+        let offset = 20; // Başlangıç gürültüsünü dengelemek için offset
         const eyebrowPoints = [70, 63, 105, 66, 107, 300, 296, 334, 293, 336];
 
         const faceMesh = new FaceMesh({locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
@@ -43,21 +44,18 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
                 
-                // Kaşların ortalama Y değerini hesapla
                 let totalY = 0;
                 eyebrowPoints.forEach(i => totalY += landmarks[i].y);
                 let currentY = totalY / eyebrowPoints.length;
 
-                // Nötr (başlangıç) pozisyonunu ayarla
                 if (neutralY === null) neutralY = currentY;
 
-                // Kaş kaldırma yüzdesi: (neutral - current) çünkü yukarı çıktıkça Y azalır
                 let movement = (neutralY - currentY) * 1000; 
-                let percentage = Math.max(0, Math.min(100, movement * 5));
+                let rawPercentage = (movement * 5) - offset;
+                let percentage = Math.max(0, Math.min(100, rawPercentage));
 
                 status.innerText = `Kaş Kalkma Oranı: %${Math.round(percentage)}`;
 
-                // Görselleştirme (Yeşil noktalar)
                 eyebrowPoints.forEach(i => {
                     ctx.fillStyle = "lime";
                     ctx.beginPath();
@@ -69,7 +67,7 @@
 
         startBtn.addEventListener('click', async () => {
             startBtn.style.display = 'none';
-            neutralY = null; // Yeniden kalibrasyon için sıfırla
+            neutralY = null; 
             const camera = new Camera(video, {
                 onFrame: async () => { await faceMesh.send({image: video}); },
                 width: { ideal: 1280 }, height: { ideal: 720 }
