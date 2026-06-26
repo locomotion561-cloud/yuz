@@ -2,12 +2,18 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>2. Basamak: Yüz Takibi - Düzeltilmiş</title>
+    <title>2. Basamak: Yüz Takibi - HD ve Tam Sığan</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
         body { margin: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #outputCanvas { position: absolute; transform: scaleX(-1); width: 100vw; height: 100vh; object-fit: cover; }
+        #outputCanvas { 
+            position: absolute; 
+            transform: scaleX(-1); 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: contain; 
+        }
         #status { position: absolute; top: 20px; color: yellow; font-size: 18px; z-index: 10; font-family: sans-serif; background: rgba(0,0,0,0.5); padding: 10px; }
         #startBtn { position: absolute; z-index: 20; padding: 20px; font-size: 20px; cursor: pointer; }
     </style>
@@ -30,6 +36,12 @@
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
 
         faceMesh.onResults(results => {
+            // Canvas boyutlarını video boyutlarına eşitlemek için kontrol
+            if (canvas.width !== results.image.width || canvas.height !== results.image.height) {
+                canvas.width = results.image.width;
+                canvas.height = results.image.height;
+            }
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
@@ -57,7 +69,8 @@
             try {
                 const camera = new Camera(video, {
                     onFrame: async () => { await faceMesh.send({image: video}); },
-                    width: 640, height: 480
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 });
                 await camera.start();
                 status.innerText = "Sistem çalışıyor.";
