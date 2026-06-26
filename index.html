@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>2. Basamak: Yüz Takibi - HD ve Tam Sığan</title>
+    <title>2. Basamak: Yüz Takibi - Kaş Hattı İzleme</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
@@ -32,6 +32,12 @@
         const video = document.getElementById('video');
         const startBtn = document.getElementById('startBtn');
 
+        // Kaşın tamamını kapsayan noktalar
+        const eyebrowPoints = [
+            70, 63, 105, 66, 107, // Sol kaş hattı
+            300, 296, 334, 293, 336 // Sağ kaş hattı
+        ];
+
         const faceMesh = new FaceMesh({locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
 
@@ -46,15 +52,15 @@
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                status.innerText = "Yüz bulundu! Kaş noktaları aktif.";
+                status.innerText = "Yüz bulundu! Kaş hattı izleniyor.";
                 const landmarks = results.multiFaceLandmarks[0];
                 
-                // Kaş üstü noktaları çiz
-                [70, 300].forEach(index => {
+                // Kaşın tamamını noktalarla çiz
+                eyebrowPoints.forEach(index => {
                     const pt = landmarks[index];
-                    ctx.fillStyle = "red";
+                    ctx.fillStyle = "lime"; // Daha belirgin yeşil noktalar
                     ctx.beginPath();
-                    ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 6, 0, 2 * Math.PI);
+                    ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 4, 0, 2 * Math.PI);
                     ctx.fill();
                 });
             } else {
